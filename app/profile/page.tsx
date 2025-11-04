@@ -160,11 +160,11 @@ export default function Profile() {
                             {secrets.map((item) => (
                                 <tr key={item.id} className="border-b border-gray-800">
                                     <td className="p-4">
-                                        <div className="font-semibold text-white">{item.name}</div>
+                                        <div className="font-semibold text-white">{item.key}</div>
                                     </td>
                                     <td className="p-4">
                                         <div className="flex items-center space-x-2">
-                                            <span>{item.key}</span>
+                                            <span>{item.value}</span>
                                         </div>
                                     </td>
                                 </tr>
