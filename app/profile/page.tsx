@@ -103,12 +103,13 @@ export default function Profile() {
     const copyApiKey = () => {
         navigator.clipboard.writeText(apiKey);
 
-        // change modal button to checkmark for 2 seconds
-        const button = document.querySelector('button[title="Copy API key"]');
+        // change modal button text to "Copied" for 2 seconds
+        const button = document.querySelector('button[title="Copy API key"]') as HTMLButtonElement | null;
         if (button) {
-            button.innerHTML = '<FiCheck />';
+            const originalInner = button.innerHTML;
+            button.innerHTML = 'Copied';
             setTimeout(() => {
-                button.innerHTML = '<FiCopy />';
+                button.innerHTML = originalInner;
             }, 2000);
         }
     };
