@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiKey, FiPlus, FiX, FiCopy, FiRefreshCw } from 'react-icons/fi';
+import { FiKey, FiPlus, FiX, FiCopy, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 
 export default function Profile() {
     const router = useRouter();
@@ -102,7 +102,15 @@ export default function Profile() {
 
     const copyApiKey = () => {
         navigator.clipboard.writeText(apiKey);
-        alert('API key copied to clipboard!');
+
+        // change modal button to checkmark for 2 seconds
+        const button = document.querySelector('button[title="Copy API key"]');
+        if (button) {
+            button.innerHTML = '<FiCheck />';
+            setTimeout(() => {
+                button.innerHTML = '<FiCopy />';
+            }, 2000);
+        }
     };
 
     const handleShowApiKey = () => {
@@ -119,7 +127,7 @@ export default function Profile() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ key: newSecretName, value: newSecretKey })
+                body: JSON.stringify({ name: newSecretName, key: newSecretKey })
             });
 
             if (response.ok) {
@@ -131,6 +139,30 @@ export default function Profile() {
                 const errorData = await response.json();
                 console.error('Error inserting secret:', errorData);
                 alert(`Error: ${errorData.error}\n${errorData.details ? JSON.stringify(errorData.details) : ''}`);
+            }
+        }
+    };
+
+    const handleDeleteSecret = async (secretId: string, secretName: string) => {
+        if (!confirm(`Are you sure you want to delete the secret "${secretName}"?`)) {
+            return;
+        }
+
+        const token = localStorage.getItem('supabase-jwt-access');
+        if (token) {
+            const response = await fetch(`/api/secrets?id=${secretId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                getSecrets(); // Refresh secrets
+            } else {
+                const errorData = await response.json();
+                console.error('Error deleting secret:', errorData);
+                alert(`Error: ${errorData.error}`);
             }
         }
     };
@@ -154,6 +186,7 @@ export default function Profile() {
                             <tr className="border-b border-gray-800">
                                 <th className="p-4 font-medium">Secret Name</th>
                                 <th className="p-4 font-medium">Secret key</th>
+                                <th className="p-4 font-medium">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -166,6 +199,16 @@ export default function Profile() {
                                         <div className="flex items-center space-x-2">
                                             <span>{item.value}</span>
                                         </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <button
+                                            onClick={() => handleDeleteSecret(item.id, item.key)}
+                                            className="flex items-center space-x-1 px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm text-white transition-colors"
+                                            title="Delete secret"
+                                        >
+                                            <FiTrash2 />
+                                            <span>Delete</span>
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

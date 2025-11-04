@@ -83,3 +83,48 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Internal server error', details: error?.message }, { status: 500 });
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        // Get the authorization header
+        const authHeader = request.headers.get('authorization');
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const token = authHeader.substring(7);
+
+        // Get the user from the token
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+        if (userError || !user) {
+            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        }
+
+        // Get the secret ID from query params
+        const { searchParams } = new URL(request.url);
+        const secretId = searchParams.get('id');
+
+        if (!secretId) {
+            return NextResponse.json({ error: 'Secret ID is required' }, { status: 400 });
+        }
+
+        // Delete the secret (ensuring it belongs to the user)
+        const { error } = await supabase
+            .from('user_secrets')
+            .delete()
+            .eq('id', secretId)
+            .eq('user_id', user.id);
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ message: 'Secret deleted successfully' }, { status: 200 });
+    } catch (error: any) {
+        console.error('Server error:', error);
+        return NextResponse.json({ error: 'Internal server error', details: error?.message }, { status: 500 });
+    }
+}
