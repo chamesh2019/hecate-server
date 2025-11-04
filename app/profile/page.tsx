@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiKey, FiPlus, FiX, FiCopy, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
+import ProfileHeader from './components/ProfileHeader';
+import SecretsTable from './components/SecretsTable';
+import NewSecretModal from './components/NewSecretModal';
+import ApiKeyModal from './components/ApiKeyModal';
+import EncryptionKeyModal from './components/EncryptionKeyModal';
 
 export default function Profile() {
     const router = useRouter();
@@ -10,9 +14,9 @@ export default function Profile() {
     const [user, setUser] = useState<any>(null);
     const [showModal, setShowModal] = useState(false);
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-    const [apiKey, setApiKey] = useState<string>('');
-    const [newSecretName, setNewSecretName] = useState('');
-    const [newSecretKey, setNewSecretKey] = useState('');
+    const [showPublicKeyModal, setShowPublicKeyModal] = useState(false);
+    const [publicKey, setPublicKey] = useState<string>('');
+    const [hasPublicKey, setHasPublicKey] = useState<boolean>(false);
 
     useEffect(() => {
         const getUser = async () => {
@@ -56,93 +60,33 @@ export default function Profile() {
         }
     };
 
+    const fetchPublicKey = async () => {
+        const token = localStorage.getItem('supabase-jwt-access');
+        if (token) {
+            const response = await fetch('/api/publickey', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.publicKey) {
+                    setPublicKey(data.publicKey);
+                    setHasPublicKey(true);
+                } else {
+                    setHasPublicKey(false);
+                }
+            }
+        }
+    };
+
     useEffect(() => {
         if (user) {
             getSecrets();
+            fetchPublicKey();
         }
     }, [user]);
-
-    const fetchApiKey = async () => {
-        const token = localStorage.getItem('supabase-jwt-access');
-        if (token) {
-            const response = await fetch('/api/apikey', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setApiKey(data.apiKey);
-            }
-        }
-    };
-
-    const regenerateApiKey = async () => {
-        const token = localStorage.getItem('supabase-jwt-access');
-        if (token) {
-            if (!confirm('Are you sure? This will invalidate your old API key.')) {
-                return;
-            }
-
-            const response = await fetch('/api/apikey', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setApiKey(data.apiKey);
-                alert('New API key generated successfully!');
-            }
-        }
-    };
-
-    const copyApiKey = () => {
-        navigator.clipboard.writeText(apiKey);
-
-        // change modal button text to "Copied" for 2 seconds
-        const button = document.querySelector('button[title="Copy API key"]') as HTMLButtonElement | null;
-        if (button) {
-            const originalInner = button.innerHTML;
-            button.innerHTML = 'Copied';
-            setTimeout(() => {
-                button.innerHTML = originalInner;
-            }, 2000);
-        }
-    };
-
-    const handleShowApiKey = () => {
-        fetchApiKey();
-        setShowApiKeyModal(true);
-    };
-
-    const handleNewSecret = async () => {
-        const token = localStorage.getItem('supabase-jwt-access');
-        if (token && newSecretName && newSecretKey) {
-            const response = await fetch('/api/secrets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ name: newSecretName, key: newSecretKey })
-            });
-
-            if (response.ok) {
-                setNewSecretName('');
-                setNewSecretKey('');
-                setShowModal(false);
-                getSecrets(); // Refresh secrets
-            } else {
-                const errorData = await response.json();
-                console.error('Error inserting secret:', errorData);
-                alert(`Error: ${errorData.error}\n${errorData.details ? JSON.stringify(errorData.details) : ''}`);
-            }
-        }
-    };
 
     const handleDeleteSecret = async (secretId: string, secretName: string) => {
         if (!confirm(`Are you sure you want to delete the secret "${secretName}"?`)) {
@@ -168,149 +112,46 @@ export default function Profile() {
         }
     };
 
+    const handleKeySaved = (key: string) => {
+        setPublicKey(key);
+        setHasPublicKey(true);
+    };
+
     return (
         <div className="min-h-screen bg-[#0A0A0A] text-gray-300 p-8">
             <div className="max-w-2xl mx-auto">
-                <header className="flex justify-between items-center mb-6">
-                    <div className="flex items-center space-x-4">
-                        <h1 className="text-xl font-semibold">Your Secret Keys</h1>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <button onClick={handleShowApiKey} className="flex items-center space-x-2 px-3 py-1 bg-gray-800 rounded-md text-sm hover:bg-gray-700"><FiKey /><span>Your api key</span></button>
-                        <button onClick={() => setShowModal(true)} className="flex items-center space-x-2 px-3 py-1 bg-gray-800 rounded-md text-sm hover:bg-gray-700"><FiPlus /><span>New secret</span></button>
-                    </div>
-                </header>
+                <ProfileHeader
+                    hasPublicKey={hasPublicKey}
+                    onShowPublicKeyModal={() => setShowPublicKeyModal(true)}
+                    onShowApiKeyModal={() => setShowApiKeyModal(true)}
+                    onShowNewSecretModal={() => setShowModal(true)}
+                />
 
-                <div className="bg-[#121212] rounded-lg">
-                    <table className="w-full text-left text-sm">
-                        <thead className="text-gray-400">
-                            <tr className="border-b border-gray-800">
-                                <th className="p-4 font-medium">Secret Name</th>
-                                <th className="p-4 font-medium">Secret key</th>
-                                <th className="p-4 font-medium">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {secrets.map((item) => (
-                                <tr key={item.id} className="border-b border-gray-800">
-                                    <td className="p-4">
-                                        <div className="font-semibold text-white">{item.key}</div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center space-x-2">
-                                            <span>{item.value}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <button
-                                            onClick={() => handleDeleteSecret(item.id, item.key)}
-                                            className="flex items-center space-x-1 px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm text-white transition-colors"
-                                            title="Delete secret"
-                                        >
-                                            <FiTrash2 />
-                                            <span>Delete</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <SecretsTable
+                    secrets={secrets}
+                    onDeleteSecret={handleDeleteSecret}
+                />
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-[#1A1A1A] p-8 rounded-lg w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-semibold">Add New Secret</h2>
-                            <button onClick={() => setShowModal(false)}><FiX /></button>
-                        </div>
-                        <div className="space-y-4">
-                            <input
-                                type="text"
-                                placeholder="Secret Name"
-                                value={newSecretName}
-                                onChange={(e) => setNewSecretName(e.target.value)}
-                                className="w-full p-2 bg-gray-800 rounded-md"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Secret Key"
-                                value={newSecretKey}
-                                onChange={(e) => setNewSecretKey(e.target.value)}
-                                className="w-full p-2 bg-gray-800 rounded-md"
-                            />
-                            <button
-                                onClick={handleNewSecret}
-                                className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-md"
-                            >
-                                Add Secret
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <NewSecretModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                hasPublicKey={hasPublicKey}
+                publicKey={publicKey}
+                onSecretAdded={getSecrets}
+            />
 
-            {showApiKeyModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-[#1A1A1A] p-8 rounded-lg w-full max-w-2xl">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-semibold">Your API Key</h2>
-                            <button onClick={() => setShowApiKeyModal(false)}><FiX className="text-xl" /></button>
-                        </div>
-                        <div className="space-y-4">
-                            <p className="text-sm text-gray-400">
-                                Use this API key to access your secrets from your client-side library. Keep it secure!
-                            </p>
-                            {apiKey ? (
-                                <>
-                                    <div className="flex items-center space-x-2 bg-gray-800 p-3 rounded-md">
-                                        <code className="flex-1 text-sm break-all">{apiKey}</code>
-                                        <button
-                                            onClick={copyApiKey}
-                                            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-md"
-                                            title="Copy API key"
-                                        >
-                                            <FiCopy />
-                                        </button>
-                                    </div>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={regenerateApiKey}
-                                            className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-md"
-                                        >
-                                            <FiRefreshCw />
-                                            <span>Regenerate Key</span>
-                                        </button>
-                                    </div>
-                                    <div className="mt-4 p-4 bg-gray-800 rounded-md">
-                                        <h3 className="font-semibold mb-2">Usage Example:</h3>
-                                        <pre className="text-xs bg-gray-900 p-3 rounded overflow-x-auto">
-                                            {`// Fetch all secrets
-fetch('http://localhost:3000/api/v1/secrets', {
-  headers: {
-    'x-api-key': '${apiKey}'
-  }
-});
+            <ApiKeyModal
+                isOpen={showApiKeyModal}
+                onClose={() => setShowApiKeyModal(false)}
+            />
 
-// Fetch a specific secret by name
-fetch('http://localhost:3000/api/v1/secrets?name=MY_SECRET', {
-  headers: {
-    'x-api-key': '${apiKey}'
-  }
-});`}
-                                        </pre>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="text-center py-4">
-                                    <p className="text-gray-400">Loading API key...</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            <EncryptionKeyModal
+                isOpen={showPublicKeyModal}
+                onClose={() => setShowPublicKeyModal(false)}
+                hasPublicKey={hasPublicKey}
+                onKeySaved={handleKeySaved}
+            />
         </div>
     );
 }
