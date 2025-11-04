@@ -17,22 +17,6 @@ export function encryptWithPublicKey(message: string, encryptionKey: string): st
 }
 
 /**
- * Decrypts a message using AES decryption with the provided key
- * @param encryptedMessage - The encrypted message
- * @param encryptionKey - The decryption key (same as encryption key)
- * @returns Decrypted message as a string
- */
-export function decryptWithPrivateKey(encryptedMessage: string, encryptionKey: string): string {
-    try {
-        const decrypted = CryptoJS.AES.decrypt(encryptedMessage, encryptionKey);
-        return decrypted.toString(CryptoJS.enc.Utf8);
-    } catch (error) {
-        console.error("Decryption error:", error);
-        throw new Error("Failed to decrypt message");
-    }
-}
-
-/**
  * Validates if a string is a valid encryption key
  * @param key - The encryption key to validate
  * @returns true if valid, false otherwise
