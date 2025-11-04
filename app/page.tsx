@@ -30,6 +30,7 @@ export default function Home() {
   }, [router]);
 
   const handleGoogleLogin = async () => {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
@@ -37,9 +38,10 @@ export default function Home() {
       },
       body: JSON.stringify({
         provider: 'google',
-        redirectTo: `${location.origin}/auth/callback`
+        redirectTo: `${baseUrl}/auth/callback`
       })
-    })
+    });
+
     if (response.ok) {
       const data = await response.json();
       if (data.url) {

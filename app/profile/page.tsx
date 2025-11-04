@@ -119,7 +119,7 @@ export default function Profile() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ name: newSecretName, key: newSecretKey })
+                body: JSON.stringify({ key: newSecretName, value: newSecretKey })
             });
 
             if (response.ok) {
