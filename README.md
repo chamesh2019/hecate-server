@@ -6,6 +6,7 @@ A secure secret management system built with Next.js, Supabase, and TypeScript. 
 
 - 🔐 **Google OAuth Authentication** - Secure login with Google
 - 🔑 **Secret Management** - Store and manage secret keys
+- 🔓 **API Key Access** - Generate API keys for client library access
 - 🎨 **Modern UI** - Dark theme with Tailwind CSS
 - 🛡️ **API Backend** - All database operations handled server-side
 - 🔒 **JWT Authentication** - Secure API endpoints with JWT tokens
@@ -28,7 +29,10 @@ hecate-server/
 │   │   ├── auth/
 │   │   │   ├── login/route.ts      # OAuth login endpoint
 │   │   │   └── user/route.ts       # User authentication check
-│   │   └── secrets/route.ts        # Secret CRUD operations
+│   │   ├── apikey/route.ts         # API key generation & retrieval
+│   │   ├── v1/
+│   │   │   └── secrets/route.ts    # Public API for client library
+│   │   └── secrets/route.ts        # Secret CRUD operations (JWT auth)
 │   ├── auth/
 │   │   └── callback/page.tsx       # OAuth callback handler
 │   ├── profile/
@@ -72,7 +76,9 @@ hecate-server/
 
 4. **Set up Supabase Database**
 
-   Create the `user_secrets` table in your Supabase database:
+   Create the required tables in your Supabase database:
+
+   **User Secrets Table:**
    ```sql
    CREATE TABLE user_secrets (
      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -98,6 +104,39 @@ hecate-server/
    -- Create policy to allow users to delete their own secrets
    CREATE POLICY "Users can delete their own secrets"
      ON user_secrets FOR DELETE
+     USING (auth.uid() = user_id);
+   ```
+
+   **API Keys Table:**
+   ```sql
+   CREATE TABLE api_keys (
+     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+     key TEXT NOT NULL UNIQUE,
+     active BOOLEAN DEFAULT true,
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+   );
+
+   -- Create index for faster lookups
+   CREATE INDEX idx_api_keys_key ON api_keys(key) WHERE active = true;
+   CREATE INDEX idx_api_keys_user_id ON api_keys(user_id);
+
+   -- Enable Row Level Security
+   ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+
+   -- Create policy to allow users to read their own API keys
+   CREATE POLICY "Users can view their own API keys"
+     ON api_keys FOR SELECT
+     USING (auth.uid() = user_id);
+
+   -- Create policy to allow users to insert their own API keys
+   CREATE POLICY "Users can insert their own API keys"
+     ON api_keys FOR INSERT
+     WITH CHECK (auth.uid() = user_id);
+
+   -- Create policy to allow users to update their own API keys
+   CREATE POLICY "Users can update their own API keys"
+     ON api_keys FOR UPDATE
      USING (auth.uid() = user_id);
    ```
 
@@ -130,17 +169,46 @@ npm run lint
 
 ## API Endpoints
 
-### Authentication
+### Authentication (JWT Required)
 
 - **POST** `/api/auth/login` - Initiate Google OAuth login
 - **GET** `/api/auth/user` - Verify JWT token and get user info
 
-### Secrets Management
+### API Key Management (JWT Required)
+
+- **GET** `/api/apikey` - Get or generate user's API key
+- **POST** `/api/apikey` - Regenerate user's API key (invalidates old key)
+
+### Secrets Management (JWT Required)
 
 - **GET** `/api/secrets` - Fetch all secrets for authenticated user
 - **POST** `/api/secrets` - Create a new secret
 
-All API endpoints require JWT authentication via `Authorization: Bearer <token>` header.
+### Public API (API Key Required)
+
+- **GET** `/api/v1/secrets` - Fetch all secrets (requires `x-api-key` header)
+- **GET** `/api/v1/secrets?name=SECRET_NAME` - Fetch specific secret by name
+
+**Usage with Client Library:**
+```javascript
+// Fetch all secrets
+const response = await fetch('http://localhost:3000/api/v1/secrets', {
+  headers: {
+    'x-api-key': 'hk_your_api_key_here'
+  }
+});
+
+// Fetch a specific secret
+const response = await fetch('http://localhost:3000/api/v1/secrets?name=DATABASE_URL', {
+  headers: {
+    'x-api-key': 'hk_your_api_key_here'
+  }
+});
+```
+
+All `/api/auth`, `/api/apikey`, and `/api/secrets` endpoints require JWT authentication via `Authorization: Bearer <token>` header.
+
+The `/api/v1/secrets` endpoint requires an API key via `x-api-key` header for client library access.
 
 ## Environment Variables
 
