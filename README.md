@@ -2,6 +2,8 @@
 
 A secure secret management system built with Next.js, Supabase, and TypeScript. This application allows users to authenticate with Google OAuth and manage their secret keys securely.
 
+This is to be used with the Hecate Keystone library.
+
 ## Features
 
 - 🔐 **Google OAuth Authentication** - Secure login with Google
