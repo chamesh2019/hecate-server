@@ -1,7 +1,7 @@
 import { FiTrash2 } from 'react-icons/fi';
 
 interface Secret {
-    createdAt: string;
+    created_at: string;
     id: string;
     key: string;
     value: string;
@@ -31,7 +31,21 @@ export default function SecretsTable({ secrets, onDeleteSecret }: SecretsTablePr
                             </td>
                             <td className="p-4">
                                 <div className="flex items-center space-x-2">
-                                    <span>{item.createdAt}</span>
+                                    <span title={item.created_at}>
+                                        {(() => {
+                                            const d = new Date(item.created_at);
+                                            return isNaN(d.getTime())
+                                                ? item.created_at
+                                                : d.toLocaleString(undefined, {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: false,
+                                                });
+                                        })()}
+                                    </span>
                                 </div>
                             </td>
                             <td className="p-4">

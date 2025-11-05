@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
 
         secrets.forEach(secret => {
             delete secret.user_id;
-            delete secret.key;
+            delete secret.value;
+            delete secret.updated_at;
         });
 
         return NextResponse.json({ secrets });
