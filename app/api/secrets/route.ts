@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
         secrets.forEach(secret => {
             delete secret.user_id;
-            secret.value = "*".repeat(16) + secret.value.slice(-4);
+            delete secret.key;
         });
 
         return NextResponse.json({ secrets });

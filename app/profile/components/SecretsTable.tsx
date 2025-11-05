@@ -1,6 +1,7 @@
 import { FiTrash2 } from 'react-icons/fi';
 
 interface Secret {
+    createdAt: string;
     id: string;
     key: string;
     value: string;
@@ -18,7 +19,7 @@ export default function SecretsTable({ secrets, onDeleteSecret }: SecretsTablePr
                 <thead className="text-gray-400">
                     <tr className="border-b border-gray-800">
                         <th className="p-4 font-medium">Secret Name</th>
-                        <th className="p-4 font-medium">Secret key</th>
+                        <th className="p-4 font-medium">Created at</th>
                         <th className="p-4 font-medium">Actions</th>
                     </tr>
                 </thead>
@@ -30,7 +31,7 @@ export default function SecretsTable({ secrets, onDeleteSecret }: SecretsTablePr
                             </td>
                             <td className="p-4">
                                 <div className="flex items-center space-x-2">
-                                    <span>{item.value}</span>
+                                    <span>{item.createdAt}</span>
                                 </div>
                             </td>
                             <td className="p-4">
