@@ -1,15 +1,16 @@
-import CryptoJS from 'crypto-js';
+import { generateKeyPairSync, publicEncrypt } from 'crypto';
 
 /**
- * Encrypts a message using AES encryption with the provided key
+ * Encrypts a message using RSA encryption with the provided public key
  * @param message - The message to encrypt
- * @param encryptionKey - The encryption key (can be a passphrase)
- * @returns Encrypted message as a string
+ * @param publicKey - The RSA public key in PEM format
+ * @returns Encrypted message as a base64 string
  */
-export function encryptWithPublicKey(message: string, encryptionKey: string): string {
+export function encryptWithPublicKey(message: string, publicKey: string): string {
     try {
-        const encrypted = CryptoJS.AES.encrypt(message, encryptionKey);
-        return encrypted.toString();
+        const buffer = Buffer.from(message, 'utf8');
+        const encrypted = publicEncrypt(publicKey, buffer);
+        return encrypted.toString('base64');
     } catch (error) {
         console.error("Encryption error:", error);
         throw new Error("Failed to encrypt message");
@@ -17,25 +18,34 @@ export function encryptWithPublicKey(message: string, encryptionKey: string): st
 }
 
 /**
- * Validates if a string is a valid encryption key
- * @param key - The encryption key to validate
+ * Validates if a string is a valid RSA public key
+ * @param key - The public key to validate
  * @returns true if valid, false otherwise
  */
 export function isValidPublicKey(key: string): boolean {
-    // For AES, we just need to ensure the key is not empty and has minimum length
-    return Boolean(key && key.trim().length >= 8);
+    // Basic validation for PEM format
+    return Boolean(key && key.trim().startsWith('-----BEGIN PUBLIC KEY-----') && key.trim().endsWith('-----END PUBLIC KEY-----'));
 }
 
 /**
- * Generates a random encryption key
- * @returns A random 256-bit key in hex format
+ * Generates an RSA key pair
+ * @returns An object containing publicKey and privateKey in PEM format
  */
 export function generateKeyPair(): { publicKey: string; privateKey: string } {
-    // Generate a random 256-bit key
-    const randomKey = CryptoJS.lib.WordArray.random(32).toString();
+    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: {
+            type: 'spki',
+            format: 'pem'
+        },
+        privateKeyEncoding: {
+            type: 'pkcs8',
+            format: 'pem'
+        }
+    });
 
     return {
-        publicKey: randomKey,
-        privateKey: randomKey, // For AES, the key is the same for encryption and decryption
+        publicKey,
+        privateKey
     };
 }

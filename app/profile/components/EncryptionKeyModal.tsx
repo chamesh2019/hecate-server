@@ -24,7 +24,7 @@ export default function EncryptionKeyModal({
         }
 
         if (!isValidPublicKey(newPublicKey)) {
-            alert('Invalid encryption key. Please provide a key with at least 8 characters.');
+            alert('Invalid RSA public key. Please provide a valid PEM-formatted public key.');
             return;
         }
 
@@ -84,8 +84,8 @@ export default function EncryptionKeyModal({
                 </div>
                 <div className="space-y-4">
                     <p className="text-sm text-gray-400">
-                        Your encryption key is used to encrypt secrets on the client side before they are stored using AES-256 encryption.
-                        You'll need the same key to decrypt them later.
+                        Your RSA public key is used to encrypt secrets on the client side before they are stored.
+                        Keep your private key safe - you'll need it to decrypt your secrets later.
                     </p>
                     {hasPublicKey && (
                         <div className="p-3 bg-blue-900 bg-opacity-20 border border-blue-700 rounded-md text-sm">
@@ -96,9 +96,9 @@ export default function EncryptionKeyModal({
                         </div>
                     )}
                     <div>
-                        <label className="block text-sm font-medium mb-2">Encryption Key (minimum 8 characters)</label>
+                        <label className="block text-sm font-medium mb-2">RSA Public Key</label>
                         <textarea
-                            placeholder="Enter your encryption key or passphrase..."
+                            placeholder="Enter your RSA public key in PEM format..."
                             value={newPublicKey}
                             onChange={(e) => setNewPublicKey(e.target.value)}
                             className="w-full p-3 bg-gray-800 rounded-md font-mono text-sm"
@@ -123,10 +123,10 @@ export default function EncryptionKeyModal({
                     <div className="mt-4 p-4 bg-gray-800 rounded-md">
                         <h3 className="font-semibold mb-2">How to use:</h3>
                         <ol className="text-xs text-gray-400 space-y-2 list-decimal list-inside">
-                            <li>Generate a random key using the button above, or provide your own passphrase (min 8 characters)</li>
-                            <li>If generated, your key will be downloaded automatically - keep it safe!</li>
-                            <li>All new secrets will be automatically encrypted with this key using AES-256</li>
-                            <li>Use the same key to decrypt secrets when you retrieve them</li>
+                            <li>Generate an RSA key pair using the button above, or provide your own RSA public key in PEM format</li>
+                            <li>If generated, your private key will be downloaded automatically - keep it safe!</li>
+                            <li>All new secrets will be automatically encrypted with your public key using RSA</li>
+                            <li>Use your private key to decrypt secrets when you retrieve them</li>
                         </ol>
                     </div>
                 </div>
