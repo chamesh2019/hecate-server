@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FiX, FiDownload } from 'react-icons/fi';
-import { isValidPublicKey, generateKeyPair } from '@/lib/encryption';
+import { isValidPublicKey } from '@/lib/encryption';
 
 interface EncryptionKeyModalProps {
     isOpen: boolean;
@@ -52,9 +52,27 @@ export default function EncryptionKeyModal({
         }
     };
 
-    const handleGenerateKeyPair = () => {
+    const handleGenerateKeyPair = async () => {
         try {
-            const keyPair = generateKeyPair();
+            const token = localStorage.getItem('supabase-jwt-access');
+            if (!token) {
+                alert('You must be logged in to generate keys.');
+                return;
+            }
+
+            const response = await fetch('/api/generate-keys', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to generate key pair');
+            }
+
+            const keyPair = await response.json();
             setNewPublicKey(keyPair.publicKey);
 
             // Download private key
@@ -62,14 +80,14 @@ export default function EncryptionKeyModal({
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'hecate-encryption-key.txt';
+            a.download = 'hecate-private-key.pem';
             a.click();
             URL.revokeObjectURL(url);
 
-            alert('Encryption key generated! Your key has been downloaded. Keep it safe - you\'ll need it to decrypt your secrets.');
-        } catch (error) {
+            alert('Key pair generated successfully! Your private key has been downloaded. Keep it safe!');
+        } catch (error: any) {
             console.error('Key generation error:', error);
-            alert('Failed to generate key');
+            alert(`Failed to generate key pair: ${error.message}`);
         }
     };
 

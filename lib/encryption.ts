@@ -1,4 +1,4 @@
-import { generateKeyPairSync, publicEncrypt } from 'crypto';
+import * as crypto from 'crypto';
 
 /**
  * Encrypts a message using RSA encryption with the provided public key
@@ -9,11 +9,28 @@ import { generateKeyPairSync, publicEncrypt } from 'crypto';
 export function encryptWithPublicKey(message: string, publicKey: string): string {
     try {
         const buffer = Buffer.from(message, 'utf8');
-        const encrypted = publicEncrypt(publicKey, buffer);
+        const encrypted = crypto.publicEncrypt(publicKey, buffer);
         return encrypted.toString('base64');
     } catch (error) {
         console.error("Encryption error:", error);
         throw new Error("Failed to encrypt message");
+    }
+}
+
+/**
+ * Decrypts a message using RSA decryption with the provided private key
+ * @param encryptedMessage - The encrypted message as a base64 string
+ * @param privateKey - The RSA private key in PEM format
+ * @returns Decrypted message as a string
+ */
+export function decryptWithPrivateKey(encryptedMessage: string, privateKey: string): string {
+    try {
+        const buffer = Buffer.from(encryptedMessage, 'base64');
+        const decrypted = crypto.privateDecrypt(privateKey, buffer);
+        return decrypted.toString('utf8');
+    } catch (error) {
+        console.error("Decryption error:", error);
+        throw new Error("Failed to decrypt message");
     }
 }
 
@@ -32,7 +49,7 @@ export function isValidPublicKey(key: string): boolean {
  * @returns An object containing publicKey and privateKey in PEM format
  */
 export function generateKeyPair(): { publicKey: string; privateKey: string } {
-    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
         modulusLength: 2048,
         publicKeyEncoding: {
             type: 'spki',
