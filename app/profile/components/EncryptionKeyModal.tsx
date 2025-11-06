@@ -75,6 +75,7 @@ export default function EncryptionKeyModal({
             const keyPair = await response.json();
             setNewPublicKey(keyPair.publicKey);
 
+
             // Download private key
             const blob = new Blob([keyPair.privateKey], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -84,6 +85,7 @@ export default function EncryptionKeyModal({
             a.click();
             URL.revokeObjectURL(url);
 
+            handleSavePublicKey();
             alert('Key pair generated successfully! Your private key has been downloaded. Keep it safe!');
         } catch (error: any) {
             console.error('Key generation error:', error);
