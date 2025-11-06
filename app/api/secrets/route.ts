@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseAdmin';
 import { secretKeyValidator, secretValueValidator } from '@/lib/validation';
 import { z } from 'zod';
 
