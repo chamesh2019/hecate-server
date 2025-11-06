@@ -104,19 +104,24 @@ export default function ApiKeyModal({ isOpen, onClose }: ApiKeyModalProps) {
                             <div className="mt-4 p-4 bg-gray-800 rounded-md">
                                 <h3 className="font-semibold mb-2">Usage Example:</h3>
                                 <pre className="text-xs bg-gray-900 p-3 rounded overflow-x-auto">
-                                    {`// Fetch all secrets
-fetch('http://localhost:3000/api/v1/secrets', {
-  headers: {
-    'x-api-key': '${apiKey}'
-  }
-});
+                                    {`
+import Hecate from 'hecate-keystone';
 
-// Fetch a specific secret by name
-fetch('http://localhost:3000/api/v1/secrets?name=MY_SECRET', {
-  headers: {
-    'x-api-key': '${apiKey}'
-  }
-});`}
+// Initialize with environment variables
+// Set HECATE_API_KEY and HECATE_USER_KEY in your environment
+const hecate = new Hecate();
+
+// Or pass keys directly to constructor
+const hecate = new Hecate('your-api-key-here', 'your-user-key-here');
+
+// Fetch a secret
+try {
+    const secret = await hecate.getSecret('DATABASE_PASSWORD');
+    console.log('Secret value:', secret.value);
+} catch (error) {
+    console.error('Failed to fetch secret:', error);
+}
+`}
                                 </pre>
                             </div>
                         </>

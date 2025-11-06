@@ -13,6 +13,7 @@ This is to be used with the Hecate Keystone library.
 - 🛡️ **API Backend** - All database operations handled server-side
 - 🔒 **JWT Authentication** - Secure API endpoints with JWT tokens
 - ⚡ **Real-time Updates** - Instant UI updates after operations
+- ✅ **Server-Side Input Validation** - Using Zod to validate user input
 
 ## Tech Stack
 
@@ -20,6 +21,7 @@ This is to be used with the Hecate Keystone library.
 - **Styling**: Tailwind CSS 4
 - **Authentication**: Supabase Auth (Google OAuth)
 - **Database**: Supabase (PostgreSQL)
+- **Validation**: Zod
 - **Icons**: React Icons (Feather Icons)
 
 ## Project Structure
@@ -34,6 +36,8 @@ hecate-server/
 │   │   ├── apikey/route.ts         # API key generation & retrieval
 │   │   ├── v1/
 │   │   │   └── secrets/route.ts    # Public API for client library
+│   │   ├── generate-keys/route.ts  # RSA key pair generation
+│   │   ├── publickey/route.ts      # Public key retrieval
 │   │   └── secrets/route.ts        # Secret CRUD operations (JWT auth)
 │   ├── auth/
 │   │   └── callback/page.tsx       # OAuth callback handler
@@ -42,7 +46,9 @@ hecate-server/
 │   ├── page.tsx                    # Landing/login page
 │   └── layout.tsx                  # Root layout
 ├── lib/
-│   └── supabaseClient.ts           # Supabase client configuration
+│   ├── encryption.ts               # Encryption/decryption utilities
+│   ├── supabaseClient.ts           # Supabase client configuration
+│   └── validation.ts               # Zod validation schemas
 └── public/
     └── google-logo.svg             # Google logo for login button
 ```
@@ -74,6 +80,7 @@ hecate-server/
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SECRET_KEY=your_supabase_secret_key
    ```
 
 4. **Set up Supabase Database**
@@ -217,12 +224,13 @@ The `/api/v1/secrets` endpoint requires an API key via `x-api-key` header for cl
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Yes |
+| `SUPABASE_SECRET_KEY` | Your Supabase secret key for server-side operations | Yes |
 
 ## Security Features
 
 - ✅ JWT token-based authentication
 - ✅ Server-side API for all database operations
+- ✅ Server-side input validation with Zod
 - ✅ Row Level Security (RLS) policies in Supabase
 - ✅ Secure token storage in localStorage
 - ✅ Authorization checks on all API endpoints
