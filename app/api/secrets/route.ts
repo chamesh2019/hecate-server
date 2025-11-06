@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
+import { secretKeyValidator, secretValueValidator } from '@/lib/validation';
+import { z } from 'zod';
 
 export async function GET(request: NextRequest) {
     try {
@@ -59,13 +61,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid token', details: userError?.message }, { status: 401 });
         }
 
-        // Parse the request body
+        // Parse and validate the request body
         const body = await request.json();
-        const { key, value } = body;
+        const validationResult = z.object({
+            key: secretKeyValidator,
+            value: secretValueValidator
+        }).safeParse(body);
 
-        if (!key || !value) {
-            return NextResponse.json({ error: 'Key and value are required' }, { status: 400 });
+        if (!validationResult.success) {
+            return NextResponse.json({ error: 'Invalid input', details: validationResult.error.flatten() }, { status: 400 });
         }
+
+        const { key, value } = validationResult.data;
 
         // Insert the new secret
         const { data, error } = await supabase
